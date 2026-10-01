@@ -37,7 +37,7 @@ export function InteractiveWidgetSection() {
         </motion.div>
 
         <motion.div
-          className="flex flex-col gap-5 rounded-xl bg-light-gray px-5 py-5 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col items-start gap-5 rounded-xl bg-light-gray px-5 py-5 lg:flex-row lg:items-center lg:justify-between"
           variants={fadeUpVariants}
           initial="hidden"
           whileInView="visible"
@@ -48,7 +48,10 @@ export function InteractiveWidgetSection() {
             Все материалы, записи разборов и статусы домашек фиксируются в едином
             Notion-пространстве ученика.
           </p>
-          <ButtonWithIcon href={`#${LEAD_FORM_ID}`}>
+          <ButtonWithIcon
+            href={`#${LEAD_FORM_ID}`}
+            className="h-auto min-h-14 w-max max-w-full shrink-0 whitespace-normal"
+          >
             Записаться на вводную диагностику
           </ButtonWithIcon>
         </motion.div>

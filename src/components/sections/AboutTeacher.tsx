@@ -7,7 +7,7 @@ export function AboutTeacher() {
   return (
     <section id="about" className="dark relative z-10 bg-transparent py-12 text-foreground lg:py-24 xl:py-[160px]">
       <div className="mx-auto w-full max-w-[1680px] px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-12">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
           <div className="shrink-0">
             <AsciiImage
               src="/images/teacher-placeholder.jpg"

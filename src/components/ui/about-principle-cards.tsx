@@ -54,7 +54,7 @@ export function AboutPrincipleCards({
   });
 
   return (
-    <div ref={gridRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div ref={gridRef} className="grid gap-4 lg:grid-cols-3">
       {items.map((item, index) => {
         const start = index / items.length;
         const end = start + 1 / items.length;

@@ -1,9 +1,11 @@
 ﻿import * as React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   ModuleMockupCard,
   type ModuleMockupType,
 } from "@/components/ui/module-mockup-card";
+import { fadeUpTransition, fadeUpVariants, viewportOnce } from "@/lib/motionPresets";
 
 export type WorksWheelMockupType = ModuleMockupType;
 
@@ -51,6 +53,152 @@ const SIDE_GAP = 32;
 /** Width kept free for the step list on the right */
 const INDEX_RESERVE = 320;
 const MIN_CARD_W = 0.22;
+
+/** Tailwind `lg` — 3D wheel from this width up; stacked cards below. */
+const LG_MIN_WIDTH_QUERY = "(min-width: 64rem)";
+
+/** Stacked list (< lg): show this many cards before “show all”. */
+const MOBILE_LIST_PREVIEW = 3;
+
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? React.useEffect : React.useLayoutEffect;
+
+function useIsLgUp(): boolean {
+  const [isLg, setIsLg] = React.useState(false);
+
+  useIsomorphicLayoutEffect(() => {
+    const query = window.matchMedia(LG_MIN_WIDTH_QUERY);
+    const onChange = () => {
+      setIsLg(query.matches);
+    };
+    onChange();
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
+  return isLg;
+}
+
+function WorksModuleListCard({
+  item,
+  reducedMotion,
+  reveal,
+}: {
+  item: WorksWheelItem;
+  reducedMotion: boolean | null;
+  reveal: "inView" | "mount";
+}) {
+  const motionProps =
+    reveal === "mount"
+      ? {
+          initial: reducedMotion ? "visible" : "hidden",
+          animate: "visible" as const,
+          transition: reducedMotion ? { duration: 0 } : fadeUpTransition(),
+        }
+      : {
+          initial: reducedMotion ? "visible" : "hidden",
+          whileInView: "visible" as const,
+          viewport: viewportOnce,
+          transition: reducedMotion ? { duration: 0 } : fadeUpTransition(),
+        };
+
+  return (
+    <motion.article
+      className="flex w-full max-w-2xl flex-col gap-5"
+      variants={fadeUpVariants}
+      {...motionProps}
+    >
+      <div className="w-full">
+        <h3 className="text-2xl font-bold tracking-tight text-foreground">
+          {item.title}
+        </h3>
+        {item.comment ? (
+          <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
+            {item.comment}
+          </p>
+        ) : null}
+      </div>
+      {item.mockupType ? (
+        <div className="w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#161618] shadow-2xl shadow-black/40">
+          <ModuleMockupCard type={item.mockupType} />
+        </div>
+      ) : item.image ? (
+        <img
+          src={item.image}
+          alt=""
+          draggable={false}
+              className="aspect-[1.45] w-full rounded-2xl border border-white/[0.08] object-cover shadow-2xl shadow-black/40"
+        />
+      ) : null}
+    </motion.article>
+  );
+}
+
+function WorksModuleList({
+  items,
+  label,
+  className,
+}: {
+  items: WorksWheelItem[];
+  label?: string;
+  className?: string;
+}) {
+  const reducedMotion = useReducedMotion();
+  const [expanded, setExpanded] = React.useState(false);
+  const hasMore = items.length > MOBILE_LIST_PREVIEW;
+  const previewItems = items.slice(0, MOBILE_LIST_PREVIEW);
+  const extraItems = items.slice(MOBILE_LIST_PREVIEW);
+  const hiddenCount = extraItems.length;
+
+  return (
+    <div
+      aria-label={label}
+      className={cn(
+        "mx-auto flex w-full max-w-[1680px] flex-col items-center gap-10 px-4 sm:px-6",
+        className,
+      )}
+    >
+      {previewItems.map((item) => (
+        <WorksModuleListCard
+          key={item.title}
+          item={item}
+          reducedMotion={reducedMotion}
+          reveal="inView"
+        />
+      ))}
+
+      {expanded
+        ? extraItems.map((item) => (
+            <WorksModuleListCard
+              key={item.title}
+              item={item}
+              reducedMotion={reducedMotion}
+              reveal="mount"
+            />
+          ))
+        : null}
+
+      {hasMore ? (
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((open) => !open)}
+            aria-expanded={expanded}
+            className={cn(
+              "inline-flex items-center justify-center rounded-full border border-white/[0.08] bg-zinc-900/50 px-6 py-3 text-sm font-medium text-zinc-300 transition-colors",
+              "hover:border-white/15 hover:text-zinc-100",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-light",
+            )}
+          >
+            {expanded
+              ? "Свернуть список"
+              : `Показать все блоки · ещё ${hiddenCount}`}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, v));
@@ -179,7 +327,7 @@ const WheelCard = React.memo(function WheelCard({
   return <div {...shared}>{face}</div>;
 });
 
-export function WorksWheel({
+function WorksWheelDesktop({
   items,
   label = "ЕГЭ 2026",
   action = "Разбор",
@@ -502,6 +650,30 @@ export function WorksWheel({
         </ol>
       </div>
     </section>
+  );
+}
+
+export function WorksWheel({
+  items,
+  label,
+  action,
+  className,
+  ...props
+}: WorksWheelProps) {
+  const isLg = useIsLgUp();
+
+  if (!isLg) {
+    return <WorksModuleList items={items} label={label} className={className} />;
+  }
+
+  return (
+    <WorksWheelDesktop
+      items={items}
+      label={label}
+      action={action}
+      className={className}
+      {...props}
+    />
   );
 }
 

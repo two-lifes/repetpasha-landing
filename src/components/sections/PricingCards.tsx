@@ -74,8 +74,8 @@ export function PricingCards() {
             })}
           </div>
 
-          <div className="flex flex-col gap-6 rounded-2xl border border-white/[0.06] bg-zinc-900/30 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-            <p className="max-w-3xl text-sm leading-relaxed text-zinc-400 sm:text-base">
+          <div className="flex lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:rounded-2xl lg:border lg:border-white/[0.06] lg:bg-zinc-900/30 lg:p-8">
+            <p className="hidden max-w-3xl text-sm leading-relaxed text-zinc-400 sm:text-base lg:block">
               {pricing.footerText}
             </p>
             <ButtonWithIcon href={`#${LEAD_FORM_ID}`} className="shrink-0">

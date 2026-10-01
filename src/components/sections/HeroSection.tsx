@@ -1,28 +1,58 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import { HeroMeshGradient } from "@/components/ui/hero-mesh-gradient";
 import { useContent } from "@/context/ContentContext";
 import { fadeUpTransition, fadeUpVariants } from "@/lib/motionPresets";
 import { LEAD_FORM_ID } from "@/lib/site-config";
 
 export function HeroSection() {
   const { hero } = useContent();
-  return (
-    <section className="relative z-10 flex min-h-screen items-end">
-      <video
-        className="absolute inset-0 size-full object-cover"
-        autoPlay
-        muted
-        loop
-        playsInline
-        aria-hidden
-      >
-        <source src="/media/banner-video.mp4" type="video/mp4" />
-      </video>
+  const reduceMotion = useReducedMotion();
 
-      <div className="absolute inset-0 bg-black/50" aria-hidden />
+  return (
+    <section className="relative z-10 flex min-h-screen items-center bg-[#0a0a0a] xl:items-end">
+      <HeroMeshGradient />
+
+      <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 xl:hidden">
+        <motion.a
+          href="#methodology"
+          aria-label="К методике подготовки"
+          className="block text-white/40 transition-colors hover:text-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-light"
+          initial={{ opacity: 0 }}
+          animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: [0, 8, 0] }}
+          transition={
+            reduceMotion
+              ? { duration: 0.6, delay: 0.35 }
+              : {
+                  opacity: { duration: 0.6, delay: 0.35 },
+                  y: {
+                    duration: 2.4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 0.35,
+                  },
+                }
+          }
+        >
+          <svg
+            viewBox="0 0 64 64"
+            fill="none"
+            aria-hidden
+            className="size-8"
+          >
+            <path
+              d="M16 24 L32 40 L48 24"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </motion.a>
+      </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1680px] px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-6 pb-10 lg:gap-[1.5rem] lg:pb-10">
+        <div className="flex flex-col gap-2 py-10 xl:gap-6 xl:py-0 xl:pb-10">
           <div className="grid items-end gap-8 xl:grid-cols-12 xl:gap-10">
             <motion.div
               className="xl:col-span-4"
@@ -41,9 +71,14 @@ export function HeroSection() {
                   aria-hidden
                 />
                 <h1 className="mb-0 text-[18px] font-normal leading-relaxed text-white/70">
-                  {hero.introBefore}{" "}
-                  <span className="text-primary-light">{hero.introHighlight}</span>{" "}
-                  {hero.introAfter}
+                  {hero.introBefore}
+                  {hero.introHighlight ? (
+                    <>
+                      {" "}
+                      <span className="text-primary-light">{hero.introHighlight}</span>
+                    </>
+                  ) : null}
+                  {hero.introAfter ? <> {hero.introAfter}</> : null}
                 </h1>
               </div>
             </motion.div>
@@ -55,7 +90,7 @@ export function HeroSection() {
               animate="visible"
               transition={fadeUpTransition(150)}
             >
-              <div className="overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-1.5 backdrop-blur-sm">
+              <div className="hidden overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-1.5 backdrop-blur-sm xl:block">
                 <img
                   src="/images/teacher-placeholder.jpg"
                   alt={hero.photoAlt}

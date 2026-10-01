@@ -108,7 +108,7 @@ export function PricingFormatToggle({
   return (
     <div
       className={cn(
-        "flex w-full shrink-0 items-center gap-0.5 rounded-full border bg-zinc-900/40 p-1 sm:w-auto",
+        "flex w-fit shrink-0 items-center gap-0.5 rounded-full border bg-zinc-900/40 p-1",
         pricingBorder,
         className,
       )}

@@ -212,8 +212,17 @@ export const TraceSpanRow = React.memo(function TraceSpanRow({
       className={cn(
         "group/row relative flex h-[var(--row)] items-center px-[var(--pad)] transition-colors duration-150",
         "data-[selected=true]:bg-foreground/[0.03] data-[state=running]:bg-foreground/[0.04]",
+        "max-lg:h-auto max-lg:flex-col max-lg:items-stretch max-lg:gap-1.5 max-lg:py-3.5 max-lg:pr-4 max-lg:pl-10",
       )}
     >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute top-[1.15rem] left-6 z-10 size-2 -translate-x-1/2 rounded-full bg-light-gray ring-1 ring-foreground/25 lg:hidden",
+          "group-data-[state=running]/row:bg-primary group-data-[state=running]/row:ring-primary",
+          "group-data-[state=done]/row:bg-primary group-data-[state=done]/row:ring-primary",
+        )}
+      />
       {span.depth > 0 && (
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-[var(--pad)]">
           {Array.from({ length: span.depth }, (_, d) => (
@@ -233,7 +242,7 @@ export const TraceSpanRow = React.memo(function TraceSpanRow({
         aria-label={`${span.label}, ${formatTime(span.dur)}${
           span.attempt != null && span.attempt > 1 ? `, попытка ${span.attempt}` : ""
         }`}
-        className="flex w-[var(--gutter)] shrink-0 cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 text-left outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="flex w-[var(--gutter)] shrink-0 cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 text-left outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 max-lg:order-1 max-lg:w-full max-lg:shrink max-lg:pr-16"
         style={{ paddingLeft: `${span.depth * 12 + 4}px` }}
       >
         <Icon
@@ -243,7 +252,7 @@ export const TraceSpanRow = React.memo(function TraceSpanRow({
             accent && "group-data-[state=done]/row:text-primary group-data-[state=running]/row:text-primary",
           )}
         />
-        <span className="truncate text-xs text-foreground transition-colors duration-200 group-data-[state=queued]/row:text-muted-foreground">
+        <span className="truncate text-xs text-foreground transition-colors duration-200 group-data-[state=queued]/row:text-muted-foreground max-lg:overflow-visible max-lg:text-sm max-lg:whitespace-normal">
           {span.label}
         </span>
         {span.attempt != null && span.attempt > 1 && (
@@ -253,9 +262,9 @@ export const TraceSpanRow = React.memo(function TraceSpanRow({
         )}
       </button>
 
-      <div className="relative h-full flex-1">
+      <div className="relative h-full flex-1 max-lg:order-3 max-lg:h-1.5 max-lg:w-full max-lg:flex-none">
         <div
-          className="absolute top-1/2 h-2 min-w-[3px] -translate-y-1/2 overflow-hidden rounded-full"
+          className="absolute top-1/2 h-2 min-w-[3px] -translate-y-1/2 overflow-hidden rounded-full max-lg:top-0 max-lg:h-full max-lg:translate-y-0 max-lg:!left-0 max-lg:!w-full max-lg:!min-w-0"
           style={{ left, width }}
         >
           <span aria-hidden="true" className="absolute inset-0 bg-foreground/10" />
@@ -276,19 +285,19 @@ export const TraceSpanRow = React.memo(function TraceSpanRow({
         </div>
       </div>
 
-      <div className="flex w-[var(--meta)] shrink-0 items-center justify-end gap-1.5 pl-2 transition-opacity duration-200 group-data-[state=queued]/row:opacity-0">
+      <div className="flex w-[var(--meta)] shrink-0 items-center justify-end gap-1.5 pl-2 transition-opacity duration-200 group-data-[state=queued]/row:opacity-0 max-lg:order-2 max-lg:w-full max-lg:justify-start max-lg:pl-0">
         {span.status === "error" && <CircleAlert aria-hidden="true" className="size-3.5 shrink-0 text-destructive" />}
         {span.status === "cached" && <Zap aria-hidden="true" className="size-3 shrink-0 text-muted-foreground" />}
         <span
           data-part="meta"
-          className="hidden truncate text-[11px] text-muted-foreground tabular-nums @md/trace:inline"
+          className="hidden truncate text-[11px] text-muted-foreground tabular-nums @md/trace:inline max-lg:!block max-lg:w-full max-lg:overflow-visible max-lg:text-left max-lg:text-xs max-lg:whitespace-normal"
         >
           {metaText(span, 1, showTokens)}
         </span>
         <span
           data-part="dur"
           className={cn(
-            "shrink-0 text-[11px] tabular-nums",
+            "shrink-0 text-[11px] tabular-nums max-lg:absolute max-lg:top-4 max-lg:right-4 max-lg:text-xs",
             span.status === "error" ? "text-destructive" : "text-foreground/70",
           )}
         >
@@ -677,7 +686,7 @@ export function AgentTrace({
             onPointerDown={onScrubDown}
             onPointerMove={onScrubMove}
             onPointerUp={onScrubUp}
-            className="relative h-7 cursor-ew-resize touch-none select-none @max-sm/trace:hidden"
+            className="relative h-7 cursor-ew-resize touch-none select-none @max-sm/trace:hidden max-lg:hidden"
           >
             <div className={cn(trackBox, "inset-y-0")}>
               {ticks.map((t) => (
@@ -694,8 +703,15 @@ export function AgentTrace({
         )}
 
         <div className="relative py-1">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-y-3 left-6 w-px -translate-x-1/2 lg:hidden">
+            <span className="absolute inset-0 bg-foreground/15" />
+            <span
+              className="absolute inset-0 origin-top bg-primary"
+              style={{ transform: "scaleY(var(--t, 0))" }}
+            />
+          </div>
           {showRuler && (
-            <div aria-hidden="true" className={cn(trackBox, "inset-y-0 @max-sm/trace:hidden")}>
+            <div aria-hidden="true" className={cn(trackBox, "inset-y-0 @max-sm/trace:hidden max-lg:hidden")}>
               {ticks.map((t) => (
                 <span
                   key={t}
@@ -706,7 +722,7 @@ export function AgentTrace({
             </div>
           )}
 
-          <ol aria-label={`${copy.spans} ${runId}`} className="relative">
+          <ol aria-label={`${copy.spans} ${runId}`} className="relative max-lg:divide-y max-lg:divide-foreground/[0.08]">
             {rows.map((span, i) => (
               <li key={span.id}>
                 <TraceSpanRow
@@ -723,7 +739,7 @@ export function AgentTrace({
             ))}
           </ol>
 
-          <div aria-hidden="true" className={cn(trackBox, "pointer-events-none inset-y-0")}>
+          <div aria-hidden="true" className={cn(trackBox, "pointer-events-none inset-y-0 max-lg:hidden")}>
             <div className="relative h-full w-full" style={{ transform: "translateX(calc(var(--t,0) * 100%))" }}>
               <span className="absolute inset-y-0 w-px bg-primary/30" />
               <span className="absolute top-0 size-1 -translate-x-0.5 rotate-45 bg-primary/50" />
@@ -735,7 +751,7 @@ export function AgentTrace({
             onPointerDown={onScrubDown}
             onPointerMove={onScrubMove}
             onPointerUp={onScrubUp}
-            className={cn(trackBox, "inset-y-0 cursor-ew-resize touch-none select-none")}
+            className={cn(trackBox, "inset-y-0 cursor-ew-resize touch-none select-none max-lg:hidden")}
           />
         </div>
       </div>
