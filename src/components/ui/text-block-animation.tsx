@@ -15,7 +15,7 @@ type TextBlockAnimationProps = {
   className?: string;
 };
 
-export default function TextBlockAnimation({
+export function TextBlockAnimation({
   children,
   animateOnScroll = true,
   delay = 0,

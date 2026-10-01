@@ -70,7 +70,7 @@ export type AsciiImageProps = {
   charSize?: number;
 };
 
-export default function AsciiImage({
+export function AsciiImage({
   src,
   alt,
   width = 500,
@@ -151,12 +151,14 @@ export default function AsciiImage({
 
     const texture = gl.createTexture();
     const image = new Image();
+    let cancelled = false;
     if (/^https?:\/\//i.test(src)) {
       image.crossOrigin = "anonymous";
     }
     image.src = src;
 
     const draw = () => {
+      if (cancelled || image.naturalWidth === 0) return;
       gl.uniform2f(gl.getUniformLocation(program, "u_imageResolution"), image.width, image.height);
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -174,6 +176,8 @@ export default function AsciiImage({
     if (image.complete && image.naturalWidth > 0) draw();
 
     return () => {
+      cancelled = true;
+      image.onload = null;
       gl.deleteProgram(program);
       gl.deleteShader(vertexShader);
       gl.deleteShader(fragmentShader);

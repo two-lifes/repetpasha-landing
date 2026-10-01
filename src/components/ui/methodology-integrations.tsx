@@ -1,12 +1,7 @@
 import { useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
+import { useScroll, type MotionValue } from "framer-motion";
 import { Card } from "@/components/ui/card";
+import { ScrollFade } from "@/components/ui/scroll-fade";
 import type { LucideIcon } from "lucide-react";
 import { ClipboardCheck, RefreshCw, Sheet } from "lucide-react";
 export type MethodologyItem = {
@@ -85,17 +80,8 @@ function MethodologyIntegrationCard({
   progress,
   range,
 }: MethodologyIntegrationCardProps) {
-  const opacity = useTransform(progress, range, [0, 1]);
-  const y = useTransform(progress, range, [28, 0]);
-  const reducedMotion = useReducedMotion();
-
   return (
-    <motion.div
-      style={{
-        opacity: reducedMotion ? 1 : opacity,
-        y: reducedMotion ? 0 : y,
-      }}
-    >
+    <ScrollFade progress={progress} range={range}>
       <Card variant="soft" className="h-full border-0 p-6 shadow-none">
         <div className="relative">
           <div className="flex size-10 items-center justify-center rounded-xl bg-accent text-primary">
@@ -108,6 +94,6 @@ function MethodologyIntegrationCard({
           </div>
         </div>
       </Card>
-    </motion.div>
+    </ScrollFade>
   );
 }

@@ -531,7 +531,9 @@ export function AgentTrace({
     const root = rootRef.current;
     if (!root) return;
 
+    let near = true;
     const update = () => {
+      if (!near) return;
       const top = root.getBoundingClientRect().top;
       const start = window.innerHeight * 0.78;
       const end = window.innerHeight * 0.28;
@@ -539,10 +541,20 @@ export function AgentTrace({
       seekRef.current(progress * opts.current.total);
     };
 
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        near = entry?.isIntersecting ?? true;
+        if (near) update();
+      },
+      { rootMargin: "30% 0px" },
+    );
+
+    observer.observe(root);
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     return () => {
+      observer.disconnect();
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
@@ -786,5 +798,3 @@ export function AgentTrace({
     </div>
   );
 }
-
-export default AgentTrace;

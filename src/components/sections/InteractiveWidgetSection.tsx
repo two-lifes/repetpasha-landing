@@ -1,10 +1,9 @@
 import { motion } from "framer-motion";
 import { ButtonWithIcon } from "@/components/ui/button-with-icon";
-import { InteractiveWidget } from "@/components/InteractiveWidget";
-import TextBlockAnimation from "@/components/ui/text-block-animation";
+import { InteractiveWidget } from "@/components/sections/InteractiveWidget";
+import { TextBlockAnimation } from "@/components/ui/text-block-animation";
 import { fadeUpTransition, fadeUpVariants, viewportOnce } from "@/lib/motionPresets";
-
-const LEAD_FORM_ID = "lead-form";
+import { LEAD_FORM_ID } from "@/lib/site-config";
 
 export function InteractiveWidgetSection() {
   return (

@@ -14,14 +14,4 @@ export const fadeUpVariants: Variants = {
   visible: { opacity: 1, y: 0 },
 };
 
-export const fadeRightVariants: Variants = {
-  hidden: { opacity: 0, x: -40 },
-  visible: { opacity: 1, x: 0 },
-};
-
-export const zoomInVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: { opacity: 1, scale: 1 },
-};
-
 export const viewportOnce = { once: true, amount: 0.2 } as const;

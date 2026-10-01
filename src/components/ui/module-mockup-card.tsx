@@ -12,8 +12,6 @@ export type ModuleMockupType =
   | "listening_1_9"
   | "reading_10_18";
 
-export type MockupType = ModuleMockupType;
-
 const GOOD_TEXT = "text-[#A8C9BB]";
 const GOOD_BG = "bg-[#A8C9BB]/10";
 const BAD_TEXT = "text-[#C9937E]";

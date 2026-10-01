@@ -8,8 +8,7 @@ import {
   fadeUpVariants,
   viewportOnce,
 } from "@/lib/motionPresets";
-
-const LEAD_FORM_ID = "lead-form";
+import { LEAD_FORM_ID } from "@/lib/site-config";
 
 export function MethodologySection() {
   return (

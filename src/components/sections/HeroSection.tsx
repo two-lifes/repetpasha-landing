@@ -37,7 +37,7 @@ export function HeroSection() {
                   alt=""
                   width={36}
                   height={36}
-                  className="size-9 shrink-0 animate-spin"
+                  className="size-9 shrink-0 animate-spin motion-reduce:animate-none"
                   aria-hidden
                 />
                 <p className="mb-0 text-[18px] leading-relaxed text-white/70">

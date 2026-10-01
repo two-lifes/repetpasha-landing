@@ -3,10 +3,9 @@ import { cn } from "@/lib/utils";
 import {
   ModuleMockupCard,
   type ModuleMockupType,
-} from "@/components/ui/ModuleMockupCard";
+} from "@/components/ui/module-mockup-card";
 
 export type WorksWheelMockupType = ModuleMockupType;
-export type { ModuleMockupType };
 
 export interface WorksWheelItem {
   title: string;
@@ -114,7 +113,7 @@ function WheelCardMedia({ item }: { item: WorksWheelItem }) {
   );
 }
 
-function WheelCard({
+const WheelCard = React.memo(function WheelCard({
   item,
   index,
   active,
@@ -178,7 +177,7 @@ function WheelCard({
   }
 
   return <div {...shared}>{face}</div>;
-}
+});
 
 export function WorksWheel({
   items,
@@ -198,6 +197,12 @@ export function WorksWheel({
   const turn = React.useRef(0);
   const target = React.useRef(0);
   const entryReveal = React.useRef(0);
+  const nearRef = React.useRef(true);
+  const kickRef = React.useRef<() => void>(() => {});
+  const syncScrollRef = React.useRef<() => void>(() => {});
+  const cardRefCache = React.useRef(
+    new Map<number, (node: HTMLElement | null) => void>(),
+  );
   const [active, setActive] = React.useState(0);
   const [stage, setStage] = React.useState<Stage>({ w: 0, h: 0 });
 
@@ -256,11 +261,17 @@ export function WorksWheel({
 
   React.useEffect(() => {
     if (!stage.h) return;
+    const section = sectionRef.current;
+    if (!section) return;
+
     let frame = 0;
+    let alive = true;
     const { ringR, ringScale, drumR, bow, shiftX } = metrics;
 
     const draw = () => {
-      frame = requestAnimationFrame(draw);
+      frame = 0;
+      if (!alive) return;
+
       const gap = target.current - turn.current;
       if (Math.abs(gap) < 0.0005) turn.current = target.current;
       else turn.current += gap * (reduced ? 1 : EASE);
@@ -306,18 +317,52 @@ export function WorksWheel({
       if (labelRef.current) labelRef.current.style.opacity = String((1 - m) * reveal);
       if (titleRef.current) titleRef.current.style.opacity = String(m);
       if (indexRef.current) indexRef.current.style.opacity = String(reveal);
-      const near = clamp(Math.round(pos), 0, last);
-      setActive((prev) => (prev === near ? prev : near));
+      const activeIndex = clamp(Math.round(pos), 0, last);
+      setActive((prev) => (prev === activeIndex ? prev : activeIndex));
+
+      if (Math.abs(target.current - turn.current) >= 0.0005) {
+        frame = requestAnimationFrame(draw);
+      }
     };
 
-    frame = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(frame);
+    const kick = () => {
+      if (!alive || frame !== 0) return;
+      frame = requestAnimationFrame(draw);
+    };
+    kickRef.current = kick;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry?.isIntersecting ?? false;
+        const wasNear = nearRef.current;
+        nearRef.current = visible;
+        if (visible) {
+          syncScrollRef.current();
+          kick();
+          return;
+        }
+        if (wasNear) {
+          syncScrollRef.current();
+          turn.current = target.current;
+        }
+      },
+      { rootMargin: "20% 0px" },
+    );
+    observer.observe(section);
+    kick();
+
+    return () => {
+      alive = false;
+      kickRef.current = () => {};
+      if (frame !== 0) cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [metrics, stage.h, count, last, reduced]);
 
   React.useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
-    const onScroll = () => {
+    const syncScroll = () => {
       const rect = el.getBoundingClientRect();
       const range = rect.height - window.innerHeight;
       const progress = range > 0 ? clamp(-rect.top / range, 0, 1) : 0;
@@ -339,14 +384,32 @@ export function WorksWheel({
         entryReveal.current = 0;
       }
     };
+    syncScrollRef.current = syncScroll;
+
+    const onScroll = () => {
+      if (!nearRef.current) return;
+      syncScroll();
+      kickRef.current();
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
+      syncScrollRef.current = () => {};
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
   }, [last]);
+
+  const cardRefFor = (index: number) => {
+    const cached = cardRefCache.current.get(index);
+    if (cached) return cached;
+    const next = (node: HTMLElement | null) => {
+      cardRefs.current[index] = node;
+    };
+    cardRefCache.current.set(index, next);
+    return next;
+  };
 
   const scrollToStep = (step: number) => {
     const el = sectionRef.current;
@@ -387,9 +450,7 @@ export function WorksWheel({
                 active={i === active}
                 action={action}
                 metrics={metrics}
-                cardRef={(node) => {
-                  cardRefs.current[i] = node;
-                }}
+                cardRef={cardRefFor(i)}
               />
             ))}
           </div>
@@ -443,6 +504,4 @@ export function WorksWheel({
     </section>
   );
 }
-
-export default WorksWheel;
 

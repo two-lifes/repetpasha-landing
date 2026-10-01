@@ -22,6 +22,7 @@ uniform vec4 u_finish;
 uniform vec4 u_transform;
 uniform vec4 u_space;
 uniform vec4 u_cursor;
+uniform vec2 u_fragOrigin;
 
 #define u_resolution u_scene.xy
 #define u_time u_scene.z
@@ -178,9 +179,10 @@ vec3 shade(vec2 uv, vec2 p, float t) {
 }
 
 void main() {
-  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 fragCoord = gl_FragCoord.xy + u_fragOrigin;
+  vec2 uv = fragCoord / u_resolution.xy;
   vec2 screenUv = uv;
-  vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution.xy)
+  vec2 p = (fragCoord - 0.5 * u_resolution.xy)
     / min(u_resolution.x, u_resolution.y);
   float cursorMask = 0.0;
 
@@ -254,7 +256,7 @@ void main() {
     col += (vec3(0.18) + col * 0.12) * cursorMask * u_cursorStrength;
   if (u_grain > 0.0001)
     col += (grainHash(
-      gl_FragCoord.xy + vec2(u_seed * 17.0, u_seed * 31.0)) - 0.5) * u_grain;
+      fragCoord + vec2(u_seed * 17.0, u_seed * 31.0)) - 0.5) * u_grain;
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 `;
@@ -280,18 +282,25 @@ function compileShader(
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.warn("[mesh] Shader compile failed.", gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   }
   return shader;
 }
 
+/**
+ * Full-page mesh, drawn into a viewport-sized buffer.
+ * `u_fragOrigin` maps viewport pixels back onto page coordinates,
+ * so the pattern stays locked to the document while scrolling.
+ */
 export function MeshDriftBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const page = canvas?.parentElement;
+    if (!canvas || !page) return;
 
     const gl = canvas.getContext("webgl", {
       alpha: false,
@@ -312,11 +321,21 @@ export function MeshDriftBackground() {
     }
 
     const program = gl.createProgram();
-    if (!program) return;
+    if (!program) {
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+      return;
+    }
     gl.attachShader(program, vertex);
     gl.attachShader(program, fragment);
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn("[mesh] Program link failed.", gl.getProgramInfoLog(program));
+      gl.deleteProgram(program);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+      return;
+    }
 
     gl.useProgram(program);
 
@@ -339,7 +358,23 @@ export function MeshDriftBackground() {
     const transform = gl.getUniformLocation(program, "u_transform");
     const space = gl.getUniformLocation(program, "u_space");
     const cursor = gl.getUniformLocation(program, "u_cursor");
-    if (!colors || !scene || !shape || !surface || !finish || !transform || !space || !cursor) {
+    const fragOrigin = gl.getUniformLocation(program, "u_fragOrigin");
+    if (
+      !colors ||
+      !scene ||
+      !shape ||
+      !surface ||
+      !finish ||
+      !transform ||
+      !space ||
+      !cursor ||
+      !fragOrigin
+    ) {
+      console.warn("[mesh] Missing shader uniforms.");
+      gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
       return;
     }
 
@@ -350,13 +385,18 @@ export function MeshDriftBackground() {
     gl.uniform4f(transform, 1453, 0, 0, 0);
     gl.uniform4f(space, 0, 0, 0, 0);
     gl.uniform4f(cursor, 0, 2, 0.65, 0.46);
+    gl.uniform2f(fragOrigin, 0, 0);
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let frame = 0;
     let running = !document.hidden;
+    let dpr = 1;
+    let viewH = 1;
+    let pageW = 1;
+    let pageH = 1;
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const syncSize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.max(1, Math.floor(canvas.clientWidth * dpr));
       const height = Math.max(1, Math.floor(canvas.clientHeight * dpr));
       if (canvas.width !== width || canvas.height !== height) {
@@ -364,15 +404,23 @@ export function MeshDriftBackground() {
         canvas.height = height;
         gl.viewport(0, 0, width, height);
       }
+      viewH = canvas.height;
+      pageW = Math.max(1, Math.floor(page.clientWidth * dpr));
+      pageH = Math.max(1, Math.floor(page.clientHeight * dpr));
     };
 
     const draw = (now: number) => {
-      resize();
+      const originY = pageH - window.scrollY * dpr - viewH;
+      gl.uniform2f(fragOrigin, 0, originY);
       const seconds = reducedMotion ? 0 : now / 1000;
-      gl.uniform4f(scene, canvas.width, canvas.height, seconds * 0.73, 4);
+      gl.uniform4f(scene, pageW, pageH, seconds * 0.73, 4);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+
+    const loop = (now: number) => {
+      draw(now);
       if (running && !reducedMotion) {
-        frame = window.requestAnimationFrame(draw);
+        frame = window.requestAnimationFrame(loop);
       }
     };
 
@@ -384,31 +432,47 @@ export function MeshDriftBackground() {
       }
       if (!running) {
         running = true;
-        frame = window.requestAnimationFrame(draw);
+        frame = window.requestAnimationFrame(loop);
       }
     };
 
-    const observer = new ResizeObserver(() => {
-      resize();
-      if (!running || reducedMotion) draw(performance.now());
-    });
-    observer.observe(canvas);
+    const onResize = () => {
+      syncSize();
+      draw(performance.now());
+    };
 
-    frame = window.requestAnimationFrame(draw);
+    const onScroll = () => {
+      if (document.hidden) return;
+      if (reducedMotion || !running) draw(performance.now());
+    };
+
+    const observer = new ResizeObserver(onResize);
+    observer.observe(page);
+
+    syncSize();
+    frame = window.requestAnimationFrame(loop);
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
 
     return () => {
       running = false;
       window.cancelAnimationFrame(frame);
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+      className="pointer-events-none fixed inset-0 z-0 h-full w-full"
       aria-hidden
     />
   );

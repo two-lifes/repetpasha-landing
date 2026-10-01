@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useMemo,
   useRef,
   type ReactNode,
 } from "react";
@@ -50,9 +51,10 @@ export function TextGradientScroll({
     offset: ["start 0.72", "end 0.42"],
   });
   const words = text.split(" ");
+  const contextValue = useMemo(() => ({ textOpacity }), [textOpacity]);
 
   return (
-    <TextGradientScrollContext.Provider value={{ textOpacity }}>
+    <TextGradientScrollContext.Provider value={contextValue}>
       <p ref={ref} className={cn("m-0", className)}>
         {words.map((word, index) => {
           const start = index / words.length;

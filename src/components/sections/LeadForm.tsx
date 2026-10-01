@@ -13,7 +13,7 @@ import {
 import { useContent } from "@/context/ContentContext";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useState } from "react";
 
 type GradeValue = "10" | "11" | "other";
 type ContactMethod = "telegram" | "max" | "callback";
@@ -50,24 +50,20 @@ function resolveTelegramHref(fromContent: string, fallback: string): string {
   return `https://t.me/${value.replace(/^@/, "")}`;
 }
 
-function FormBackdrop() {
-  const blobs = useMemo(
-    () =>
-      Array.from({ length: 4 }, (_, i) => ({
-        size: 140 + i * 40,
-        left: 10 + i * 22,
-        top: 15 + (i % 2) * 35,
-        delay: i * -4,
-      })),
-    [],
-  );
+const FORM_BLOBS = Array.from({ length: 4 }, (_, index) => ({
+  size: 140 + index * 40,
+  left: 10 + index * 22,
+  top: 15 + (index % 2) * 35,
+  delay: index * -4,
+}));
 
+function FormBackdrop() {
   return (
     <div
       className="pointer-events-none absolute inset-0 overflow-hidden opacity-40"
       aria-hidden
     >
-      {blobs.map((blob, index) => (
+      {FORM_BLOBS.map((blob, index) => (
         <div
           key={index}
           className="absolute animate-pulse rounded-full bg-gradient-to-br from-zinc-600/30 to-zinc-400/10 blur-3xl"

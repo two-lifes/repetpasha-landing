@@ -1,4 +1,4 @@
-import AsciiImage from "@/components/ui/great-ui-ascii-image";
+import { AsciiImage } from "@/components/ui/ascii-image";
 import { AboutPrincipleCards } from "@/components/ui/about-principle-cards";
 import { TextGradientScroll } from "@/components/ui/text-gradient-scroll";
 import { TextRevealByWord } from "@/components/ui/text-reveal";

@@ -1,11 +1,11 @@
-import { AboutTeacher } from "@/components/AboutTeacher";
-import { CasesAndProofs } from "@/components/CasesAndProofs";
-import { FaqAccordion } from "@/components/FaqAccordion";
-import { LeadForm } from "@/components/LeadForm";
-import { PricingCards } from "@/components/PricingCards";
-import { HeroSection } from "@/components/HeroSection";
-import { InteractiveWidgetSection } from "@/components/InteractiveWidgetSection";
-import { MethodologySection } from "@/components/MethodologySection";
+import { AboutTeacher } from "@/components/sections/AboutTeacher";
+import { CasesAndProofs } from "@/components/sections/CasesAndProofs";
+import { FaqAccordion } from "@/components/sections/FaqAccordion";
+import { HeroSection } from "@/components/sections/HeroSection";
+import { InteractiveWidgetSection } from "@/components/sections/InteractiveWidgetSection";
+import { LeadForm } from "@/components/sections/LeadForm";
+import { MethodologySection } from "@/components/sections/MethodologySection";
+import { PricingCards } from "@/components/sections/PricingCards";
 import { MeshDriftBackground } from "@/components/ui/mesh-drift-background";
 
 function App() {
