@@ -1,31 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GlowField } from "@/components/ui/glow-field";
-import { TextGradientScroll } from "@/components/ui/text-gradient-scroll";
 import { TextRevealByWord } from "@/components/ui/text-reveal";
-import { LEAD_FORM_ENDPOINT, LEAD_FORM_ID, TELEGRAM_HREF } from "@/lib/site-config";
+import { useContent } from "@/context/ContentContext";
 import {
   formatRuPhoneInput,
   formatTelegramInput,
   isValidRuPhone,
   isValidTelegramUsername,
 } from "@/lib/contact-format";
-import { useContent } from "@/context/ContentContext";
+import { LEAD_FORM_ENDPOINT, LEAD_FORM_ID, TELEGRAM_HREF } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { type FormEvent, useState } from "react";
 
-type GradeValue = "10" | "11" | "other";
-type ContactMethod = "telegram" | "max" | "callback";
-
-const CONTACT_INPUT_META: Record<
-  ContactMethod,
-  { autoComplete: string; inputMode: "text" | "tel" }
-> = {
-  telegram: { autoComplete: "username", inputMode: "text" },
-  max: { autoComplete: "tel", inputMode: "tel" },
-  callback: { autoComplete: "tel", inputMode: "tel" },
-};
+type GradeValue = "10" | "11" | "graduate";
 
 const CHIP_CLASS =
   "rounded-full border px-4 py-2 text-sm font-medium transition-colors";
@@ -50,42 +39,37 @@ function resolveTelegramHref(fromContent: string, fallback: string): string {
   return `https://t.me/${value.replace(/^@/, "")}`;
 }
 
-const FORM_BLOBS = Array.from({ length: 4 }, (_, index) => ({
-  size: 140 + index * 40,
-  left: 10 + index * 22,
-  top: 15 + (index % 2) * 35,
-  delay: index * -4,
-}));
+function telegramHandle(href: string): string {
+  const match = href.match(/t\.me\/([A-Za-z0-9_]+)/);
+  if (match?.[1]) {
+    return `@${match[1]}`;
+  }
+  return "@username";
+}
 
-function FormBackdrop() {
-  return (
-    <div
-      className="pointer-events-none absolute inset-0 overflow-hidden opacity-40"
-      aria-hidden
-    >
-      {FORM_BLOBS.map((blob, index) => (
-        <div
-          key={index}
-          className="absolute animate-pulse rounded-full bg-gradient-to-br from-zinc-600/30 to-zinc-400/10 blur-3xl"
-          style={{
-            width: blob.size,
-            height: blob.size,
-            left: `${blob.left}%`,
-            top: `${blob.top}%`,
-            animationDelay: `${blob.delay}s`,
-            animationDuration: "8s",
-          }}
-        />
-      ))}
-    </div>
-  );
+function formatContactInput(value: string): string {
+  if (!value.trim()) {
+    return "";
+  }
+  if (/[a-zA-Z@]/.test(value)) {
+    return formatTelegramInput(value);
+  }
+  return formatRuPhoneInput(value);
+}
+
+function isValidContact(value: string): boolean {
+  if (/[a-zA-Z@]/.test(value)) {
+    return isValidTelegramUsername(value);
+  }
+  return isValidRuPhone(value);
 }
 
 export function LeadForm() {
   const { leadForm, meta } = useContent();
   const telegramHref = resolveTelegramHref(meta.telegramUrl, TELEGRAM_HREF);
+  const handle = telegramHandle(telegramHref);
+  const [noteBefore, noteAfter] = leadForm.directNote.split("{handle}");
   const [name, setName] = useState("");
-  const [contactMethod, setContactMethod] = useState<ContactMethod>("telegram");
   const [contact, setContact] = useState("");
   const [contactError, setContactError] = useState<string | null>(null);
   const [grade, setGrade] = useState<GradeValue | "">("");
@@ -105,13 +89,8 @@ export function LeadForm() {
     setGradeError(false);
 
     const contactTrimmed = contact.trim();
-    if (contactMethod === "telegram") {
-      if (!isValidTelegramUsername(contactTrimmed)) {
-        setContactError(leadForm.telegramError);
-        return;
-      }
-    } else if (!isValidRuPhone(contactTrimmed)) {
-      setContactError(leadForm.phoneError);
+    if (!isValidContact(contactTrimmed)) {
+      setContactError(leadForm.contactError);
       return;
     }
     setContactError(null);
@@ -120,9 +99,6 @@ export function LeadForm() {
 
     const payload = {
       name: name.trim(),
-      contactMethod:
-        leadForm.contactMethods.find((method) => method.value === contactMethod)?.label ??
-        contactMethod,
       contact: contactTrimmed,
       grade: leadForm.grades.find((item) => item.value === grade)?.label ?? grade,
     };
@@ -141,7 +117,6 @@ export function LeadForm() {
         const text = [
           leadForm.messageHeader,
           `Имя: ${payload.name}`,
-          `Способ связи: ${payload.contactMethod}`,
           `Контакт: ${payload.contact}`,
           `Класс: ${payload.grade}`,
         ].join("\n");
@@ -166,32 +141,26 @@ export function LeadForm() {
     >
       <div className="mx-auto w-full max-w-[1680px] px-4 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0a0a]/90">
-          <div className="border-b border-white/[0.06] px-6 py-10 text-center lg:px-10">
-            <Badge
-              variant="outline"
-              className="mb-4 border-white/[0.06] bg-transparent px-3 py-1 text-[10px] font-medium tracking-wider text-zinc-400 uppercase"
-            >
-              {leadForm.badge}
-            </Badge>
-            <TextRevealByWord
-              text={leadForm.title}
-              reveal="inView"
-              align="center"
-              className="text-[clamp(1.875rem,4vw,2.5rem)] md:text-4xl lg:text-5xl"
-            />
-            <TextGradientScroll
-              text={leadForm.subtitle}
-              className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground"
-              textOpacity="medium"
-            />
-          </div>
-
           <div className="grid lg:grid-cols-2">
             <div className="space-y-8 border-b border-white/[0.06] p-6 lg:border-r lg:border-b-0 xl:p-12">
-              <p className="text-sm leading-relaxed text-zinc-400">{leadForm.aside}</p>
+              <div className="space-y-4">
+                <Badge
+                  variant="outline"
+                  className="border-white/[0.06] bg-transparent px-3 py-1 text-[10px] font-medium tracking-wider text-zinc-400 uppercase"
+                >
+                  {leadForm.badge}
+                </Badge>
+                <TextRevealByWord
+                  text={leadForm.title}
+                  reveal="inView"
+                  className="text-[clamp(1.875rem,4vw,2.5rem)] md:text-4xl"
+                />
+                <p className="text-lg leading-relaxed text-zinc-400">{leadForm.subtitle}</p>
+              </div>
+
               <ul className="space-y-3">
                 {leadForm.valuePoints.map((point) => (
-                  <li key={point} className="flex gap-2 text-sm text-zinc-300">
+                  <li key={point} className="flex gap-2 text-sm leading-snug text-zinc-300">
                     <Check
                       className="mt-0.5 size-4 shrink-0 text-zinc-500"
                       strokeWidth={2}
@@ -202,29 +171,25 @@ export function LeadForm() {
                 ))}
               </ul>
 
-              <div className="flex flex-col gap-3 rounded-xl border border-white/[0.06] bg-zinc-900/40 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-zinc-100">{leadForm.directTitle}</p>
-                  <p className="mt-0.5 text-xs leading-snug text-zinc-500">
-                    {leadForm.directNote}
-                  </p>
-                </div>
-                <Button
-                  className="h-10 shrink-0 rounded-full px-5 text-sm font-semibold"
-                  asChild
-                >
-                  <a href={telegramHref} target="_blank" rel="noopener noreferrer">
-                    {leadForm.directButton}
+              <p className="text-sm leading-relaxed text-zinc-400">
+                {noteBefore ?? leadForm.directNote}
+                {noteAfter !== undefined ? (
+                  <a
+                    href={telegramHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-zinc-200 underline-offset-2 hover:underline"
+                  >
+                    {handle}
                   </a>
-                </Button>
-              </div>
+                ) : null}
+                {noteAfter}
+              </p>
             </div>
 
-            <div className="relative p-6 xl:p-12">
-              <FormBackdrop />
-
+            <div className="p-6 xl:p-12">
               {submitted ? (
-                <div className="relative flex min-h-[280px] flex-col justify-center gap-3 rounded-xl border border-white/[0.06] bg-zinc-900/30 p-8">
+                <div className="flex min-h-[280px] flex-col justify-center gap-3">
                   <p className="text-lg font-semibold text-zinc-50">{leadForm.successTitle}</p>
                   <p className="text-sm leading-relaxed text-zinc-400">
                     {LEAD_FORM_ENDPOINT
@@ -233,7 +198,7 @@ export function LeadForm() {
                   </p>
                 </div>
               ) : (
-                <form className="relative space-y-2" onSubmit={handleSubmit} noValidate>
+                <form className="space-y-2" onSubmit={handleSubmit} noValidate>
                   <GlowField
                     id="lead-name"
                     name="name"
@@ -244,61 +209,23 @@ export function LeadForm() {
                     placeholder={leadForm.namePlaceholder}
                     required
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(event) => setName(event.target.value)}
                   />
-
-                  <fieldset className="mt-6 space-y-3">
-                    <legend className="text-sm font-medium text-zinc-300">
-                      {leadForm.contactLegend}
-                    </legend>
-                    <div className="flex flex-wrap gap-2" role="radiogroup">
-                      {leadForm.contactMethods.map((option) => {
-                        const selected = contactMethod === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={selected}
-                            onClick={() => {
-                              setContactMethod(option.value);
-                              setContact("");
-                              setContactError(null);
-                            }}
-                            className={chipClassName(selected)}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
 
                   <GlowField
                     id="lead-contact"
                     name="contact"
-                    label={leadForm.contactFields[contactMethod].label}
+                    label={leadForm.contactLabel}
                     type="text"
-                    autoComplete={CONTACT_INPUT_META[contactMethod].autoComplete}
-                    inputMode={CONTACT_INPUT_META[contactMethod].inputMode}
-                    placeholder={leadForm.contactFields[contactMethod].placeholder}
+                    autoComplete="tel"
+                    placeholder={leadForm.contactPlaceholder}
                     required
                     value={contact}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      if (contactMethod === "telegram") {
-                        setContact(formatTelegramInput(raw));
-                      } else {
-                        setContact(formatRuPhoneInput(raw));
-                      }
+                    onChange={(event) => {
+                      setContact(formatContactInput(event.target.value));
                       setContactError(null);
                     }}
-                    onFocus={() => {
-                      if (contactMethod === "telegram" && !contact) {
-                        setContact("@");
-                      }
-                    }}
-                    className="mt-6"
+                    className="mt-8"
                   />
                   {contactError ? (
                     <p className="mt-2 text-xs text-destructive" role="alert">
@@ -306,7 +233,7 @@ export function LeadForm() {
                     </p>
                   ) : null}
 
-                  <fieldset className="mt-10 space-y-3">
+                  <fieldset className="mt-8 space-y-3">
                     <legend className="text-sm font-medium text-zinc-300">
                       {leadForm.gradeLegend}
                     </legend>
@@ -341,24 +268,29 @@ export function LeadForm() {
                   </fieldset>
 
                   {submitError ? (
-                    <p className="text-sm text-destructive" role="alert">
+                    <p className="mt-4 text-sm text-destructive" role="alert">
                       {submitError}
                     </p>
                   ) : null}
 
-                  <div className="relative mt-10">
-                    <Button
-                      type="submit"
-                      className="relative z-[1] h-12 w-full rounded-full text-base font-semibold tracking-wide"
-                      disabled={pending}
+                  <Button
+                    type="submit"
+                    className="mt-8 h-12 w-full rounded-full text-base font-semibold"
+                    disabled={pending}
+                  >
+                    {pending ? leadForm.pendingLabel : leadForm.submitLabel}
+                  </Button>
+                  <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+                    {leadForm.replyNote}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+                    <a
+                      href="/privacy-policy.html"
+                      className="underline decoration-white/20 underline-offset-2 hover:text-zinc-300"
                     >
-                      {pending ? leadForm.pendingLabel : leadForm.submitLabel}
-                    </Button>
-                    <div
-                      className="pointer-events-none absolute inset-0 -z-0 scale-95 rounded-full bg-zinc-400/20 blur-xl transition-transform duration-500 hover:scale-100"
-                      aria-hidden
-                    />
-                  </div>
+                      Политика конфиденциальности
+                    </a>
+                  </p>
                 </form>
               )}
             </div>

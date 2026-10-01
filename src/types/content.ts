@@ -95,46 +95,31 @@ export const siteContentSchema = z.object({
     badge: z.string(),
     title: z.string(),
     subtitle: z.string(),
-    aside: z.string(),
     valuePoints: z.array(z.string()).min(1),
-    directTitle: z.string(),
     directNote: z.string(),
-    directButton: z.string(),
     successTitle: z.string(),
     successWithEndpoint: z.string(),
     successWithoutEndpoint: z.string(),
     nameLabel: z.string(),
     nameHint: z.string(),
     namePlaceholder: z.string(),
-    contactLegend: z.string(),
-    contactMethods: z
-      .array(
-        z.object({
-          value: z.enum(["telegram", "max", "callback"]),
-          label: z.string(),
-        }),
-      )
-      .min(1),
-    contactFields: z.object({
-      telegram: z.object({ label: z.string(), placeholder: z.string() }),
-      max: z.object({ label: z.string(), placeholder: z.string() }),
-      callback: z.object({ label: z.string(), placeholder: z.string() }),
-    }),
+    contactLabel: z.string(),
+    contactPlaceholder: z.string(),
+    contactError: z.string(),
     gradeLegend: z.string(),
     grades: z
       .array(
         z.object({
-          value: z.enum(["10", "11", "other"]),
+          value: z.enum(["10", "11", "graduate"]),
           label: z.string(),
         }),
       )
       .min(1),
     gradeError: z.string(),
-    telegramError: z.string(),
-    phoneError: z.string(),
     submitError: z.string(),
     submitLabel: z.string(),
     pendingLabel: z.string(),
+    replyNote: z.string(),
     messageHeader: z.string(),
   }),
 });

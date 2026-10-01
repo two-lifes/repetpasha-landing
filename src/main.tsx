@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App";
 import { ContentProvider } from "@/context/ContentContext";
 import "./index.css";
@@ -9,10 +9,16 @@ if (root === null) {
   throw new Error("Root element #root not found");
 }
 
-createRoot(root).render(
+const tree = (
   <StrictMode>
     <ContentProvider>
       <App />
     </ContentProvider>
-  </StrictMode>,
+  </StrictMode>
 );
+
+if (root.childElementCount > 0) {
+  hydrateRoot(root, tree);
+} else {
+  createRoot(root).render(tree);
+}

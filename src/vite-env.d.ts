@@ -5,4 +5,5 @@ interface ImportMetaEnv {
   readonly VITE_TELEGRAM_URL?: string;
   readonly VITE_TELEGRAM_USERNAME?: string;
   readonly VITE_LEAD_FORM_ENDPOINT?: string;
+  readonly VITE_SITE_URL?: string;
 }

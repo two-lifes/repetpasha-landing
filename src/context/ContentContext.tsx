@@ -10,17 +10,24 @@ import type { SiteContent } from "@/types/content";
 
 const ContentContext = createContext<SiteContent>(defaultSiteContent);
 
+function setMeta(attribute: "name" | "property", key: string, value: string) {
+  const selector = `meta[${attribute}="${key}"]`;
+  let meta = document.head.querySelector(selector);
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute(attribute, key);
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute("content", value);
+}
+
 function applyDocumentMeta(content: SiteContent) {
   document.title = content.meta.title;
-  const description = document.querySelector('meta[name="description"]');
-  if (description) {
-    description.setAttribute("content", content.meta.description);
-    return;
-  }
-  const meta = document.createElement("meta");
-  meta.name = "description";
-  meta.content = content.meta.description;
-  document.head.appendChild(meta);
+  setMeta("name", "description", content.meta.description);
+  setMeta("property", "og:title", content.meta.title);
+  setMeta("property", "og:description", content.meta.description);
+  setMeta("name", "twitter:title", content.meta.title);
+  setMeta("name", "twitter:description", content.meta.description);
 }
 
 export function ContentProvider({ children }: { children: ReactNode }) {

@@ -40,11 +40,11 @@ export function HeroSection() {
                   className="size-9 shrink-0 animate-spin motion-reduce:animate-none"
                   aria-hidden
                 />
-                <p className="mb-0 text-[18px] leading-relaxed text-white/70">
+                <h1 className="mb-0 text-[18px] font-normal leading-relaxed text-white/70">
                   {hero.introBefore}{" "}
                   <span className="text-primary-light">{hero.introHighlight}</span>{" "}
                   {hero.introAfter}
-                </p>
+                </h1>
               </div>
             </motion.div>
 
@@ -74,9 +74,9 @@ export function HeroSection() {
             animate="visible"
             transition={fadeUpTransition(200)}
           >
-            <h1 className="mb-0 max-w-full text-[clamp(3.5rem,14vw,8rem)] font-bold leading-none text-white">
+            <p className="mb-0 max-w-full text-[clamp(3.5rem,14vw,8rem)] font-bold leading-none text-white">
               {hero.title}
-            </h1>
+            </p>
             <a
               href={`#${LEAD_FORM_ID}`}
               className="group inline-flex items-center rounded-full bg-primary py-1 pe-1 ps-7 transition-colors hover:bg-secondary"

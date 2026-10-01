@@ -1,3 +1,7 @@
+export const SITE_URL = (
+  import.meta.env.VITE_SITE_URL?.trim() || "https://repetpasha.ru"
+).replace(/\/$/, "");
+
 const telegramUrl = import.meta.env.VITE_TELEGRAM_URL?.trim();
 const telegramHandle =
   import.meta.env.VITE_TELEGRAM_USERNAME?.replace(/^@/, "") ?? "pavel_sharagulov";
