@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-primary: #6b9080;
+  --color-primary-foreground: #ffffff;
+  --color-primary-light: #a8c9bb;
+  --color-accent: #c9937e;
+  --color-accent-foreground: #1f2a2e;
+  --color-secondary-foreground: #ffffff;
+  --color-input: rgba(31, 42, 46, 0.12);
+  --color-destructive: #b42318;
+  --color-destructive-foreground: #ffffff;
+  --color-secondary: #1f2a2e;
+  --color-dark: #1f2a2e;
+  --color-muted: #797f82;
+  --color-dark-light: #626a6d;
+  --color-light-gray: #f4f8fa;
+  --color-light: #e4e5e6;
+
+  --color-background: #ffffff;
+  --color-foreground: #1f2a2e;
+  --color-card: #ffffff;
+  --color-card-foreground: #1f2a2e;
+  --color-muted-foreground: #797f82;
+
+  --breakpoint-xxl: 87.5rem;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+/* Black theme. Colors only — type and spacing stay with the site. */
+.dark {
+  --color-background: #0a0a0a;
+  --color-foreground: #f5f5f5;
+  --color-card: #121212;
+  --color-card-foreground: #f5f5f5;
+  --color-popover: #121212;
+  --color-popover-foreground: #f5f5f5;
+  --color-muted: #1a1a1a;
+  --color-muted-foreground: #a0a0a0;
+  --color-primary: #7c9082;
+  --color-primary-foreground: #000000;
+  --color-primary-light: #a0aa88;
+  --color-accent: #36443a;
+  --color-accent-foreground: #f5f5f5;
+  --color-secondary: #1a1a1a;
+  --color-secondary-foreground: #f5f5f5;
+  --color-border: #2a2a2a;
+  --color-input: #121212;
+  --color-ring: #7c9082;
+  --color-light-gray: #121212;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+}
+
+/* Глобальный скроллбар (viewport и вложенные области) */
+:root {
+  --scrollbar-size: 10px;
+  --scrollbar-track: #0a0a0a;
+  --scrollbar-thumb: #343434;
+  --scrollbar-thumb-hover: #7c9082;
+  --scrollbar-thumb-active: #6b9080;
+  --scrollbar-border: #0a0a0a;
+}
+
+html {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+html,
+body {
+  background-color: #0a0a0a;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border: 2px solid var(--scrollbar-border);
+  border-radius: 9999px;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+}
+
+*::-webkit-scrollbar-corner {
+  background-color: var(--scrollbar-track);
+}

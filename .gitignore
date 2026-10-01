@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Vite
+.vite/
+*.local
+
+# Secrets. .env.example stays in the repo as a template.
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Tests and coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# PocketBase, if the binary is run from this repo
+pb_data/
+pb_migrations/*.db
+*.db
+*.db-journal
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.tmp
+*~
