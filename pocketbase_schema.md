@@ -1,57 +1,62 @@
-# PocketBase: коллекция `site_content`
+# PocketBase: плоские коллекции контента
 
-Фронтенд читает **одну** запись с `section = "main"`. Поле `data` — JSON целиком по схеме `SiteContent` (`src/types/content.ts`). Если API недоступен или JSON не проходит Zod, сайт показывает `src/content/site.default.json`.
+Фронтенд читает пять коллекций параллельно и собирает из них `SiteContent`. Тексты, которых нет в этих коллекциях (кейсы, шапка тарифов, подписи формы), берутся из `src/content/site.default.json`.
 
-## Коллекция
+Длинные тексты — поле Editor. Сайт показывает их как обычный текст, без HTML. Список пунктов тарифа — тоже Editor: один абзац на пункт.
 
-| Параметр | Значение |
-|----------|----------|
-| Name | `site_content` |
-| Type | Base |
-| API | REST, без SDK |
+Запись и удаление закрыты для гостей (`createRule` / `updateRule` / `deleteRule` пустые, то есть только суперпользователь). Чтение публичное.
 
-## Поля
+## Коллекции
 
-| Имя | Тип | Опции |
-|-----|-----|--------|
-| `section` | Plain text | Required, Unique. Для визитки одно значение: `main` |
-| `data` | JSON | Required. Объект со ключами `meta`, `hero`, `cases`, `wheelModules`, `pricing`, `faq`, `leadForm` |
+| Коллекция | Записей | Поля |
+|-----------|---------|------|
+| `content_meta` | 1 | `title` text, `description` editor, `telegramUrl` text, `workingHours` text |
+| `content_hero` | 1 | `title`, `introBefore`, `introHighlight`, `introAfter`, `ctaLabel`, `photoAlt` — text |
+| `content_pricing_plans` | список | `planId` text unique, `type` select `individual` / `group`, `name` text, `description` text, `price` text, `priceUnit` text, `originalPrice` text, `priceNote` text, `featuredLabel` text, `ctaLabel` text, `isFeatured` bool, `features` editor, `sortOrder` number |
+| `content_faq` | список | `question` text, `answer` editor, `sortOrder` number |
+| `content_lead_form` | 1 | `badge` text, `title` text, `subtitle` editor, `contactLabel` text, `contactPlaceholder` text, `submitLabel` text, `directNote` editor, `replyNote` editor |
 
-Тексты — строки и массивы строк. HTML в `data` не используется: вёрстка остаётся в React.
+`description` у тарифа — строка под ценой на карточке. `isFeatured` включает основную кнопку тарифа.
 
 ## API rules
 
-| Правило | Выражение |
-|---------|-----------|
-| List | `""` (публичное чтение) |
+| Правило | Значение |
+|---------|----------|
+| List | `""` |
 | View | `""` |
-| Create | `@request.auth.id != ""` |
-| Update | `@request.auth.id != ""` |
-| Delete | `@request.auth.id != ""` |
+| Create | `null` |
+| Update | `null` |
+| Delete | `null` |
 
-Пустая строка в List/View в PocketBase означает «доступно без авторизации».
-
-## Запрос с сайта
+## Запросы с сайта
 
 ```
-GET {VITE_POCKETBASE_URL}/api/collections/site_content/records?filter=section%3D%22main%22&perPage=1
+GET {VITE_POCKETBASE_URL}/api/collections/content_meta/records?perPage=1&sort=-created
+GET {VITE_POCKETBASE_URL}/api/collections/content_hero/records?perPage=1&sort=-created
+GET {VITE_POCKETBASE_URL}/api/collections/content_pricing_plans/records?perPage=200&sort=sortOrder
+GET {VITE_POCKETBASE_URL}/api/collections/content_faq/records?perPage=200&sort=sortOrder
+GET {VITE_POCKETBASE_URL}/api/collections/content_lead_form/records?perPage=1&sort=-created
 ```
 
-Ожидаемый фрагмент ответа:
+## Создание и заполнение
 
-```json
-{
-  "items": [
-    {
-      "section": "main",
-      "data": {}
-    }
-  ]
-}
+В `.env` (не коммитить) добавьте почту и пароль суперпользователя:
+
+```
+POCKETBASE_ADMIN_EMAIL=
+POCKETBASE_ADMIN_PASSWORD=
 ```
 
-`data` — копия структуры `src/content/site.default.json`.
+`VITE_POCKETBASE_URL` уже указывает на сервер. Затем:
+
+```
+npm run pocketbase:setup
+```
+
+Скрипт `scripts/setup-pocketbase-content.mjs` создаёт коллекции, открывает чтение и записывает тексты из `site.default.json`. Повторный запуск обновляет те же записи.
+
+Старая коллекция `site_content` скриптом не удаляется. Сайт её больше не читает.
 
 ## Nginx
 
-Проксируйте PocketBase отдельно от статики Vite, например `https://pb.example.com` → `127.0.0.1:8090`, и задайте этот origin в `VITE_POCKETBASE_URL` на этапе сборки фронтенда. Для браузерного `fetch` включите CORS в PocketBase на домен визитки.
+Проксируйте PocketBase отдельно от статики Vite и задайте этот origin в `VITE_POCKETBASE_URL` на этапе сборки фронтенда. Для браузерного `fetch` включите CORS в PocketBase на домен визитки.
